@@ -1,0 +1,210 @@
+const deleteFile = require('../../utils/functions/deleteFile')
+const errorHandler = require('../../utils/functions/errorHandler')
+const { generateSign } = require('../../utils/token/jwt')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
+
+const register = async (req, res, next) => {
+  try {
+    const nickNameDuplicated = await User.findOne({
+      nickName: req.body.nickName
+    })
+    const emailDuplicated = await User.findOne({ email: req.body.email })
+
+    if (emailDuplicated || nickNameDuplicated) {
+      if (req.file?.path) await deleteFile(req.file.path)
+      return res
+        .status(400)
+        .json(
+          emailDuplicated
+            ? 'A user with this email already exists.'
+            : 'This nickName is already taken, try another one.'
+        )
+    }
+    const newUser = new User(req.body)
+    newUser.profileImg = req.file ? req.file.path : null
+
+    const userRegistered = await newUser.save()
+    return res.status(201).json(userRegistered)
+  } catch (error) {
+    console.log(error)
+    if (req.file?.path) await deleteFile(req.file.path)
+    return errorHandler(res, error, 500, 'register your profile')
+  }
+}
+
+const login = async (req, res, next) => {
+  try {
+    const user = await User.findOne({ email: req.body.email })
+    if (user) {
+      if (bcrypt.compareSync(req.body.password, user.password)) {
+        const token = generateSign(user._id)
+        const { password, ...safeUser } = user.toObject() // extraemos el password guardando el resto en safeUser para luego al retornar que no devuelva el password.
+        return res.status(200).json({ user: safeUser, token })
+      } else {
+        if (req.file?.path) await deleteFile(req.file.path)
+        return res.status(401).json('User or password incorrect')
+      }
+    } else {
+      if (req.file?.path) await deleteFile(req.file.path)
+      return res.status(401).json('User or password incorrect')
+    }
+  } catch (error) {
+    console.log(error)
+    if (req.file?.path) await deleteFile(req.file.path)
+    return errorHandler(res, error, 500, 'log in')
+  }
+}
+
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password')
+      .populate({
+        path: 'attendingEvents',
+        populate: [
+          { path: 'attendees', select: 'nickName name email profileImg' },
+          { path: 'locationCountry' },
+          { path: 'createdBy', select: 'name email profileImg' }
+        ]
+      })
+
+    return res.status(200).json(user)
+  } catch (error) {
+    return errorHandler(res, error, 500, 'get profile data')
+  }
+}
+
+const getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .populate('attendingEvents')
+      .lean()
+    if (users.length === 0) {
+      return res.status(404).json('No users have been found')
+    } else {
+      return res.status(200).json(users)
+    }
+  } catch (error) {
+    console.log(error)
+    return errorHandler(res, error, 500, 'get all users data')
+  }
+}
+
+const getUserByID = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const user = await User.findById(id)
+      .select('-password')
+      .populate('attendingEvents')
+      .lean()
+    if (!user) {
+      return res.status(404).json('This user does not exist')
+    } else {
+      return res.status(200).json(user)
+    }
+  } catch (error) {
+    console.log(error)
+    return errorHandler(res, error, 500, 'get the user by ID')
+  }
+}
+
+const updateUserInfo = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const oldUser = await User.findById(id)
+    if (!oldUser) {
+      if (req.file?.path) await deleteFile(req.file.path)
+      return res.status(404).json('User not found')
+    }
+    if (req.user._id.toString() !== id && req.user.role !== 'admin') {
+      if (req.file?.path) await deleteFile(req.file.path)
+      return res.status(401).json('You are not authorized')
+    }
+    const updateData = {
+      nickName: req.body.nickName,
+      name: req.body.name,
+      frstSurname: req.body.frstSurname,
+      scndSurname: req.body.scndSurname,
+      birthDate: req.body.birthDate,
+      location: req.body.location,
+      email: req.body.email,
+      gender: req.body.gender
+    }
+    if (req.body.password) {
+      updateData.password = bcrypt.hashSync(req.body.password, 10)
+    }
+    if (req.user.role === 'admin' && req.body.role) {
+      updateData.role = req.body.role
+    }
+
+    if (req.file) updateData.profileImg = req.file.path
+
+    if (req.body.nickName && req.body.nickName !== oldUser.nickName) {
+      const nickNameExists = await User.findOne({ nickName: req.body.nickName })
+      if (nickNameExists) {
+        if (req.file?.path) await deleteFile(req.file.path)
+
+        return res.status(400).json('This nickName is already taken')
+      }
+    }
+    if (req.body.email && req.body.email !== oldUser.email) {
+      const emailExists = await User.findOne({ email: req.body.email })
+      if (emailExists) {
+        if (req.file?.path) await deleteFile(req.file.path)
+        return res.status(400).json('This email is already taken')
+      }
+    }
+
+    if (req.file && oldUser.profileImg) await deleteFile(oldUser.profileImg)
+
+    const userUpdated = await User.findByIdAndUpdate(id, updateData, {
+      new: true
+    })
+
+    return res.status(200).json(userUpdated)
+  } catch (error) {
+    console.log(error)
+    if (req.file?.path) await deleteFile(req.file.path)
+    return errorHandler(res, error, 500, 'update the user info')
+  }
+}
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    if (req.user._id.toString() === id || req.user.role === 'admin') {
+      const userDeleted = await User.findByIdAndDelete(id)
+      if (!userDeleted) {
+        return res.status(404).json('User not found')
+      } else {
+        if (userDeleted.profileImg) {
+          try {
+            await deleteFile(userDeleted.profileImg)
+          } catch (fileError) {
+            console.log('Error deleting profile image:', fileError)
+            // No retornamos error, el usuario ya fue eliminado exitosamente
+          }
+        }
+        return res.status(200).json(userDeleted)
+      }
+    } else {
+      return res.status(401).json('You are not authorized')
+    }
+  } catch (error) {
+    console.log(error)
+    return errorHandler(res, error, 500, 'delete the user')
+  }
+}
+
+module.exports = {
+  login,
+  register,
+  getProfile,
+  getUsers,
+  getUserByID,
+  updateUserInfo,
+  deleteUser
+}
