@@ -6,7 +6,18 @@ Permite creación, lectura, actualización y eliminación de datos, manejo de im
 
 ---
 
-## 🚀 Instalación y uso
+## Aplicación desplegada
+
+Frontend (Vercel):
+https://project13-final-project-front-end-git-main-aleixsus-projects.vercel.app
+
+Repositorio Backend:
+https://github.com/AleixSu/Project13.Final_Project_BackEnd
+
+Backend desplegado (Render):
+https://eventhub-backend-7hna.onrender.com
+
+## Instalación y uso
 
 ### 1. Clona el repositorio:
 
@@ -46,16 +57,44 @@ npm run dev
 ### 6. Para producción:
 
 ```bash
-npm start
+npm run start
 ```
 
 **Base URL (desarrollo):**  
 `http://localhost:3000/api/v1`
 
 **Base URL (producción):**  
-`https://tu-backend.onrender.com/api/v1`
+`https://eventhub-backend-7hna.onrender.com`
 
 ---
+
+## Seed inicial de base de datos (CSV)
+
+El proyecto incluye un seed inicial automatizado que carga toda la información desde archivos Excel exportados a formato CSV, utilizando el módulo nativo fs de Node.js.
+Este proceso permite inicializar completamente la base de datos con datos realistas y relaciones consistentes entre colecciones.
+
+### Qué carga el seed
+
+- Usuarios (con contraseñas encriptadas con bcrypt)
+- Localizaciones
+- Eventos
+
+#### Relaciones:
+
+- Usuarios inscritos a eventos
+- Eventos asociados a localizaciones
+
+### Flujo del seed
+
+1. Lectura de ficheros CSV mediante fs
+2. Transformación de datos a arrays compatibles con Mongoose
+3. Conexión a MongoDB
+4. Limpieza de colecciones existentes
+5. Inserción de usuarios con password hasheado
+6. Inserción de localizaciones
+7. Inserción de eventos
+8. Actualización de relaciones cruzadas
+9. Cierre controlado de la conexión
 
 ## Endpoints disponibles
 
