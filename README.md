@@ -11,8 +11,8 @@ Permite creación, lectura, actualización y eliminación de datos, manejo de im
 Frontend (Vercel):
 https://project13-final-project-front-end-git-main-aleixsus-projects.vercel.app
 
-Repositorio Backend:
-https://github.com/AleixSu/Project13.Final_Project_BackEnd
+Repositorio Frontend:
+https://github.com/AleixSu/Project13.Final_Project_FontEnd
 
 Backend desplegado (Render):
 https://eventhub-backend-7hna.onrender.com
