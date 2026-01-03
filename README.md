@@ -8,8 +8,8 @@ Permite creación, lectura, actualización y eliminación de datos, manejo de im
 
 ## Aplicación desplegada
 
-Frontend (Vercel):
-https://project13-final-project-front-end-git-main-aleixsus-projects.vercel.app
+Frontend (Vercel): https://project13-final-project-front-end.vercel.app/
+
 
 Repositorio Frontend:
 [https://github.com/AleixSu/Project13.Final_Project_FontEnd
