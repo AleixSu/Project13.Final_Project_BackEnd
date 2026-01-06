@@ -13,6 +13,19 @@ app.use(cors())
 connectCl()
 connectDB()
 
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Welcome to EventHub API',
+    version: '1.0.0',
+    endpoints: {
+      users: '/api/v1/users',
+      events: '/api/v1/events',
+      locations: '/api/v1/locations'
+    },
+    documentation: 'https://github.com/AleixSu?tab=repositories'
+  })
+})
+
 app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/events', eventRoutes)
 app.use('/api/v1/locations', locationRoutes)

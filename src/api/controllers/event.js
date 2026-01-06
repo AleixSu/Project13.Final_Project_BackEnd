@@ -7,7 +7,7 @@ const User = require('../models/user')
 const getEvents = async (req, res, next) => {
   try {
     const events = await Event.find()
-      .populate('attendees')
+      .populate('attendees', 'nickName name email profileImg')
       .populate('locationCountry')
       .populate('createdBy')
     if (events.length === 0) {
@@ -25,8 +25,8 @@ const getEventByID = async (req, res, next) => {
   try {
     const { id } = req.params
     const event = await Event.findById(id)
-      .populate('attendees')
-      .populate('location')
+      .populate('attendees', 'nickName name email profileImg')
+      .populate('locationCountry')
       .populate('createdBy')
     if (!event) {
       return res.status(404).json('Event not found')
@@ -50,7 +50,7 @@ const getEventByLocation = async (req, res, next) => {
     const eventsByLocation = await Event.find({
       locationCountry: { $in: ids }
     })
-      .populate('attendees')
+      .populate('attendees', 'nickName name email profileImg')
       .populate('locationCountry')
       .populate('createdBy')
 
@@ -135,7 +135,7 @@ const updateEventInfo = async (req, res, next) => {
     const eventUpdated = await Event.findByIdAndUpdate(id, updateData, {
       new: true
     })
-      .populate('attendees')
+      .populate('attendees', 'nickName name email profileImg')
       .populate('locationCountry')
       .populate('createdBy')
     return res.status(200).json(eventUpdated)

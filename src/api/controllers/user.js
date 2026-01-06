@@ -35,7 +35,9 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email })
+    const user = await User.findOne({ email: req.body.email }).populate(
+      'attendingEvents'
+    )
     if (user) {
       if (bcrypt.compareSync(req.body.password, user.password)) {
         const token = generateSign(user._id)
