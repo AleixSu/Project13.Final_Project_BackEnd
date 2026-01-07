@@ -81,7 +81,7 @@ const createEvent = async (req, res, next) => {
         if (req.files?.eventImg) await deleteFile(req.files.eventImg[0].path)
         if (req.files?.eventBgImg)
           await deleteFile(req.files.eventBgImg[0].path)
-        return res.status(400).json('This event already exists')
+        return res.status(400).json('Sorry, this event already exists.')
       } else {
         if (req.files?.eventImg) newEvent.eventImg = req.files.eventImg[0].path
         if (req.files?.eventBgImg)
