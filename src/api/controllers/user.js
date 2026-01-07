@@ -6,20 +6,37 @@ const bcrypt = require('bcrypt')
 
 const register = async (req, res, next) => {
   try {
-    const nickNameDuplicated = await User.findOne({
-      nickName: req.body.nickName
-    })
-    const emailDuplicated = await User.findOne({ email: req.body.email })
-
-    if (emailDuplicated || nickNameDuplicated) {
-      if (req.file?.path) await deleteFile(req.file.path)
+    const { nickName, email, password } = req.body
+    if (password.length < 8) {
       return res
         .status(400)
-        .json(
-          emailDuplicated
-            ? 'A user with this email already exists.'
-            : 'This nickName is already taken, try another one.'
-        )
+        .json({ error: 'The password must have at least 8 characters' })
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
+      return res.status(400).json({
+        error:
+          'The password must have at least 1 uppercase and 1 lowercase letter'
+      })
+    }
+    if (!/\d/.test(password)) {
+      return res
+        .status(400)
+        .json({ error: 'The password must have at least 1 number' })
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return res
+        .status(400)
+        .json({ error: 'The password must have at least 1 special character' })
+    }
+    const nickNameDuplicated = await User.findOne({ nickName })
+    const emailDuplicated = await User.findOne({ email })
+
+    if (nickNameDuplicated || emailDuplicated) {
+      return res.status(400).json({
+        error: nickNameDuplicated
+          ? 'This nickName is already taken, try another one.'
+          : 'A user with this email already exists.'
+      })
     }
     const newUser = new User(req.body)
     newUser.profileImg = req.file ? req.file.path : null
