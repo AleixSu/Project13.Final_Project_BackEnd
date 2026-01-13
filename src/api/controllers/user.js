@@ -129,6 +129,25 @@ const getUserByID = async (req, res, next) => {
   }
 }
 
+const getUserByEmail = async (req, res, next) => {
+  try {
+    const { email, nickName } = req.body
+    const user = await User.findOne({ email, nickName })
+      .select('-password')
+      .populate('attendingEvents')
+      .lean()
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ error: 'User not found or credentials do not match' })
+    }
+    return res.status(200).json(user)
+  } catch (error) {
+    return errorHandler(res, error, 500, 'find the user you are looking for')
+  }
+}
+
 const updateUserInfo = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -152,8 +171,19 @@ const updateUserInfo = async (req, res, next) => {
       gender: req.body.gender
     }
     if (req.body.password) {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/
+
+      if (!passwordRegex.test(req.body.password)) {
+        if (req.file?.path) await deleteFile(req.file.path)
+        return res
+          .status(400)
+          .json(
+            'Password must have at least 8 characters, including one lowercase letter, one uppercase letter, one number, and one special character'
+          )
+      }
       updateData.password = bcrypt.hashSync(req.body.password, 10)
     }
+
     if (req.user.role === 'admin' && req.body.role) {
       updateData.role = req.body.role
     }
@@ -224,6 +254,7 @@ module.exports = {
   getProfile,
   getUsers,
   getUserByID,
+  getUserByEmail,
   updateUserInfo,
   deleteUser
 }

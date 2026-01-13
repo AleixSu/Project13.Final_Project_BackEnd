@@ -7,7 +7,8 @@ const {
   register,
   updateUserInfo,
   deleteUser,
-  getProfile
+  getProfile,
+  getUserByEmail
 } = require('../controllers/user')
 
 const userRoutes = require('express').Router()
@@ -17,6 +18,7 @@ userRoutes.post('/register', upload.single('profileImg'), register)
 userRoutes.get('/profile', isAuth, getProfile)
 userRoutes.get('/', getUsers)
 userRoutes.get('/:id', getUserByID)
+userRoutes.post('/getUserByEmail', isAuth, allowRoles('admin'), getUserByEmail)
 userRoutes.patch('/:id', [isAuth, upload.single('profileImg')], updateUserInfo)
 userRoutes.delete('/:id', isAuth, deleteUser)
 

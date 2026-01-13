@@ -39,6 +39,23 @@ const getEventByID = async (req, res, next) => {
   }
 }
 
+const getEventByName = async (req, res, next) => {
+  try {
+    const { eventName } = req.body
+    const event = await Event.findOne({ eventName })
+      .populate('attendees', 'nickName name email profileImg')
+      .populate('locationCountry')
+      .lean()
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' })
+    }
+    return res.status(200).json(event)
+  } catch (error) {
+    return errorHandler(res, error, 500, 'find the event you are looking for')
+  }
+}
+
 const getEventByLocation = async (req, res, next) => {
   try {
     if (!req.params.locations) {
@@ -263,6 +280,7 @@ module.exports = {
   getEvents,
   getEventByID,
   getEventByLocation,
+  getEventByName,
   updateEventInfo,
   createEvent,
   signUpToEvent,
