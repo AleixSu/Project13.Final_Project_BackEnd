@@ -254,7 +254,7 @@ const deleteEvent = async (req, res, next) => {
     } else {
       //____________________
       const event = await Event.findById(id)
-      const locationId = event.location
+      const locationId = event.locationCountry
       const location = await Location.findById(locationId)
       const index = location.eventList.findIndex((a) => a.equals(event._id))
       if (index !== -1) {
