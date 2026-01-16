@@ -43,6 +43,27 @@ const getCountries = async (req, res, next) => {
     return errorHandler(res, error, 500, 'get the countries')
   }
 }
+const getCountryByName = async (req, res, next) => {
+  try {
+    const { country } = req.body
+    const findedCountry = await Location.findOne({ country })
+      .populate('eventList')
+      .lean()
+
+    if (!findedCountry) {
+      return res.status(404).json({ error: 'Location not found' })
+    }
+
+    return res.status(200).json(findedCountry)
+  } catch (error) {
+    return errorHandler(
+      res,
+      error,
+      500,
+      'find the location you are looking for'
+    )
+  }
+}
 
 const createLocation = async (req, res, next) => {
   try {
@@ -70,7 +91,7 @@ const createLocation = async (req, res, next) => {
       .status(201)
       .json({ message: 'Location created successfully', data: locationCreated })
   } catch (error) {
-    console.error(error)
+    console.error(error + 'hola')
     if (req.file?.path) await deleteFile(req.file.path)
     return errorHandler(res, error, 500, 'create a new location')
   }
@@ -133,6 +154,7 @@ module.exports = {
   getLocations,
   getLocationByID,
   getCountries,
+  getCountryByName,
   createLocation,
   updateLocationInfo,
   deleteLocation

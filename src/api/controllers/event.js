@@ -214,31 +214,51 @@ const signUpToEvent = async (req, res, next) => {
 const cancelEventSignUp = async (req, res, next) => {
   try {
     const { id } = req.params
+
     const event = await Event.findById(id)
-    const indexEvent = event.attendees.findIndex((a) => a.equals(req.user._id))
-    if (indexEvent === -1) {
+    const isAttending = event.attendees.some((a) => a.equals(req.user._id))
+
+    if (!isAttending) {
       return res
         .status(400)
-        .json({ messeage: 'You are not signed up for this event' })
+        .json({ message: 'You are not signed up for this event' })
     }
-    event.attendees.splice(indexEvent, 1)
-    event.currentAttendees = Math.max(0, event.currentAttendees - 1)
-    const updatedEvent = await event.save()
 
     const user = await User.findById(req.user._id)
-    const indexUser = user.attendingEvents.findIndex((a) => a.equals(event._id))
-    if (indexUser === -1) {
+    const hasEventInProfile = user.attendingEvents.some((e) => e.equals(id))
+
+    if (!hasEventInProfile) {
       return res
         .status(404)
         .json({ message: 'You are not attending this event' })
     }
-    user.attendingEvents.splice(indexUser, 1)
-    const updatedUser = await user.save()
+
+    const newCurrentAttendees = Math.max(0, event.currentAttendees - 1)
+
+    const eventUpdated = await Event.findByIdAndUpdate(
+      id,
+      {
+        currentAttendees: newCurrentAttendees,
+        $pull: { attendees: req.user._id }
+      },
+      { new: true }
+    )
+      .populate('attendees', 'nickName name email profileImg')
+      .populate('locationCountry')
+      .populate('createdBy')
+
+    const userUpdated = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $pull: { attendingEvents: id }
+      },
+      { new: true }
+    )
 
     return res.status(200).json({
       message: 'You have successfully canceled your sign up',
-      event: updatedEvent,
-      user: updatedUser
+      event: eventUpdated,
+      user: userUpdated
     })
   } catch (error) {
     console.log(error)

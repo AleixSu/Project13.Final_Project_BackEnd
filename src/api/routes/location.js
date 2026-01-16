@@ -6,7 +6,8 @@ const {
   createLocation,
   updateLocationInfo,
   deleteLocation,
-  getCountries
+  getCountries,
+  getCountryByName
 } = require('../controllers/location')
 
 const locationRoutes = require('express').Router()
@@ -14,6 +15,12 @@ const locationRoutes = require('express').Router()
 locationRoutes.get('/', getLocations)
 locationRoutes.get('/countries', getCountries)
 locationRoutes.get('/:id', getLocationByID)
+locationRoutes.post(
+  '/getLocationByName',
+  isAuth,
+  allowRoles('admin'),
+  getCountryByName
+)
 locationRoutes.post(
   '/',
   [isAuth, allowRoles('admin'), upload.single('locationImg')],
