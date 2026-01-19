@@ -8,7 +8,8 @@ const {
   updateUserInfo,
   deleteUser,
   getProfile,
-  getUserByEmail
+  getUserByEmail,
+  getUsersByNameOrNickname
 } = require('../controllers/user')
 
 const userRoutes = require('express').Router()
@@ -19,6 +20,7 @@ userRoutes.get('/profile', isAuth, getProfile)
 userRoutes.get('/', getUsers)
 userRoutes.get('/:id', getUserByID)
 userRoutes.post('/getUserByEmail', isAuth, allowRoles('admin'), getUserByEmail)
+userRoutes.post('/getUsersByNameOrNickname', isAuth, getUsersByNameOrNickname)
 userRoutes.patch('/:id', [isAuth, upload.single('profileImg')], updateUserInfo)
 userRoutes.delete('/:id', isAuth, deleteUser)
 

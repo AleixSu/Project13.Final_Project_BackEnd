@@ -1,6 +1,7 @@
 const deleteFile = require('../../utils/functions/deleteFile')
 const errorHandler = require('../../utils/functions/errorHandler')
 const { generateSign } = require('../../utils/token/jwt')
+const Event = require('../models/event')
 const User = require('../models/user')
 const bcrypt = require('bcrypt')
 
@@ -148,6 +149,38 @@ const getUserByEmail = async (req, res, next) => {
   }
 }
 
+const getUsersByNameOrNickname = async (req, res, next) => {
+  try {
+    const { searchQuery, name, nickName, eventId } = req.body
+
+    const event = await Event.findById(eventId).populate('attendees')
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' })
+    }
+
+    const searchTerm = (searchQuery || name || nickName || '').toLowerCase()
+
+    if (!searchTerm) {
+      return res.status(400).json({ error: 'Please provide a search term' })
+    }
+
+    const users = event.attendees.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchTerm) ||
+        user.nickName.toLowerCase().includes(searchTerm)
+    )
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'No users found' })
+    }
+
+    return res.status(200).json(users)
+  } catch (error) {
+    return errorHandler(res, error, 500, 'find users')
+  }
+}
+
 const updateUserInfo = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -255,6 +288,7 @@ module.exports = {
   getUsers,
   getUserByID,
   getUserByEmail,
+  getUsersByNameOrNickname,
   updateUserInfo,
   deleteUser
 }
